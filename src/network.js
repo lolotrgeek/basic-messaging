@@ -1,8 +1,10 @@
 const Zyre = require('zyre.js')
-const ping = require('ping')
+const { Encode, Decode } = require('./parse')
+
 class Node {
     constructor(callback) {
         this.callback = callback
+        this.identifier = message => console.log(message)
         this.core = new Zyre()
         this.distances = {} // {id: sent: timestamp, received: timestamp distance: ms}
         this.heartbeat = 2000
@@ -21,6 +23,11 @@ class Node {
         this.core.on("whisper", (id, name, message) => {
             if (message === "ping") this.pong(id)
             if (message === "pong") this.received(id)
+            if (message === "identify") this.self(id)
+            else {
+                message = Decode(message)
+                if (typeof message === 'object' && message.id && message.distances) this.identifier(message)
+            }
         })
 
         this.core.on("shout", (id, name, message, group) => {
@@ -62,6 +69,17 @@ class Node {
         for (let peer in this.peers) {
             this.ping(peer)
         }
+    }
+    self(id) {
+        this.core.whisper(id, Encode({ id: this.core.getIdentity(), distances: this.distances }))
+    }
+
+    identify(id) {
+        this.core.whisper(id, "identify")
+    }
+    identify_all() {
+        let peers = node1.core.getPeers()
+        for (let peer in peers) this.identify(peer)
     }
 }
 

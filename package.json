@@ -10,8 +10,6 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "ping": "^0.4.2",
-    "uuid": "^8.3.2",
     "zyre.js": "^1.2.2"
   }
 }
