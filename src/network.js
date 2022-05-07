@@ -78,7 +78,7 @@ class Node {
         this.core.whisper(id, "identify")
     }
     identify_all() {
-        let peers = node1.core.getPeers()
+        let peers = this.core.getPeers()
         for (let peer in peers) this.identify(peer)
     }
 }
