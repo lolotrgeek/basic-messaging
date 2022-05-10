@@ -9,34 +9,47 @@ class Node {
         this.distances = {} // {id: sent: timestamp, received: timestamp distance: ms}
         this.heartbeat = 2000
         this.peers = {}
-        this.core.start().then(() => {
-            this.core.join(this.core.getIdentity())
-        })
-
-        this.core.on('connect', (id, name, headers) => {
-            this.core.join(id)
-            this.distances[id] = {}
-            // this.distances[id].distance = []
-            this.ping(id)
-        })
-
-        this.core.on("whisper", (id, name, message) => {
-            if (message === "ping") this.pong(id)
-            if (message === "pong") this.received(id)
-            if (message === "identify") this.self(id)
-            else {
-                message = Decode(message)
-                if (typeof message === 'object' && message.id && message.distances) this.identifier(message)
-            }
-        })
-
-        this.core.on("shout", (id, name, message, group) => {
-            this.next(id)
-            if (typeof this.callback === 'function') this.callback(message)
-        })
-
+        this.core.start().then(() => this.core.join(this.core.getIdentity()))
+        this.core.on('connect', (id, name, headers) => this.hear_connect(id))
+        this.core.on("whisper", (id, name, message) => this.hear_whisper(id, message))
+        this.core.on("shout", (id, name, message, group) => this.hear_shout(id, message))
         this.core.on('disconnect', (id, name) => { delete this.distances[id] })
         this.core.on('expired', (id, name) => { delete this.distances[id] })
+    }
+
+    /**
+     * When a peer connects, join their channel and ping them
+     * @param {string} peer id of peer connecting
+     */
+    hear_connect(peer) {
+        this.core.join(peer)
+        this.distances[peer] = {}
+        // this.distances[peer].distance = []
+        this.ping(peer)
+    }
+
+    /**
+     * 
+     * @param {string} peer id of peer that whispered
+     * @param {*} message 
+     */
+    hear_whisper(peer, message) {
+        if (message === "ping") this.pong(peer)
+        if (message === "pong") this.received(peer)
+        if (message === "identify") this.identify_self(peer)
+        else {
+            message = Decode(message)
+            if (typeof message === 'object' && message.id && message.distances) this.identifier(message)
+        }
+    }
+    /**
+     * 
+     * @param {string} peer id of peer that shouted
+     * @param {*} message 
+     */
+    hear_shout(peer, message) {
+        this.next(peer)
+        if (typeof this.callback === 'function') this.callback(message)
     }
 
     send(message) {
@@ -45,24 +58,26 @@ class Node {
         this.core.shout(channel, message)
     }
 
-    pong(id) {
-        this.core.whisper(id, "pong")
+    pong(peer) {
+        this.core.whisper(peer, "pong")
         // this.distances[id].received = 0
         // this.distances[id].sent = Date.now()
     }
-    ping(id) {
-        this.core.whisper(id, "ping")
-        this.distances[id].sent = Date.now()
+
+    ping(peer) {
+        this.core.whisper(peer, "ping")
+        this.distances[peer].sent = Date.now()
     }
-    received(id) {
-        this.distances[id].received = Date.now()
-        let distance = this.distances[id].received - this.distances[id].sent
-        // this.distances[id].distance = [...this.distances[id].distance, distance]
-        this.distances[id].distance = distance
+
+    received(peer) {
+        this.distances[peer].received = Date.now()
+        let distance = this.distances[peer].received - this.distances[peer].sent
+        // this.distances[peer].distance = [...this.distances[peer].distance, distance]
+        this.distances[peer].distance = distance
         console.log("distances", this.distances)
     }
-    next(id) {
-        this.ping(id)
+    next(peer) {
+        this.ping(peer)
     }
     ping_all() {
         this.peers = this.core.getPeers()
@@ -70,12 +85,13 @@ class Node {
             this.ping(peer)
         }
     }
-    self(id) {
-        this.core.whisper(id, Encode({ id: this.core.getIdentity(), distances: this.distances }))
+
+    identify_self(to) {
+        this.core.whisper(to, Encode({ id: this.core.getIdentity(), distances: this.distances }))
     }
 
-    identify(id) {
-        this.core.whisper(id, "identify")
+    identify(peer) {
+        this.core.whisper(peer, "identify")
     }
     identify_all() {
         let peers = this.core.getPeers()
