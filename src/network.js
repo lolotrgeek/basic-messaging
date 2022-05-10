@@ -71,6 +71,7 @@ class Node {
     }
 
     ping(peer) {
+        if(!peer || !this.distances[peer]) return
         this.core.whisper(peer, "ping")
         this.distances[peer].sent = Date.now()
     }
@@ -103,6 +104,8 @@ class Node {
         let peers = this.core.getPeers()
         for (let peer in peers) this.identify(peer)
     }
+
+
 }
 
 
