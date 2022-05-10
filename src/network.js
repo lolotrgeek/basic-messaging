@@ -5,6 +5,7 @@ class Node {
     constructor(callback) {
         this.callback = callback
         this.identifier = message => console.log(message)
+        this.removed = message => message
         this.core = new Zyre()
         this.distances = {} // {id: sent: timestamp, received: timestamp distance: ms}
         this.heartbeat = 2000
@@ -13,8 +14,8 @@ class Node {
         this.core.on('connect', (id, name, headers) => this.hear_connect(id))
         this.core.on("whisper", (id, name, message) => this.hear_whisper(id, message))
         this.core.on("shout", (id, name, message, group) => this.hear_shout(id, message))
-        this.core.on('disconnect', (id, name) => { delete this.distances[id] })
-        this.core.on('expired', (id, name) => { delete this.distances[id] })
+        this.core.on('disconnect', (id, name) => this.hear_removed(id))
+        this.core.on('expired', (id, name) => this.hear_removed(id))
     }
 
     /**
@@ -50,6 +51,11 @@ class Node {
     hear_shout(peer, message) {
         this.next(peer)
         if (typeof this.callback === 'function') this.callback(message)
+    }
+
+    hear_removed(peer) {
+        delete this.distances[peer]
+        this.removed(peer)
     }
 
     send(message) {
