@@ -111,6 +111,13 @@ class Node {
         for (let peer in this.peers) this.identify(peer)
     }
 
+    update() {
+        this.peers = this.core.getPeers()
+        for (let peer in this.peers) {
+            this.ping(peer)
+            this.identify(peer)
+        }
+    }
 
 }
 
