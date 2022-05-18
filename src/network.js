@@ -2,6 +2,10 @@ const Zyre = require('zyre.js')
 const { Encode, Decode } = require('./parse')
 
 class Node {
+    /**
+     * 
+     * @param {function} callback handle incoming messages
+     */
     constructor(callback) {
         this.callback = callback
         this.identifier = message => console.log(message)
@@ -81,11 +85,13 @@ class Node {
         let distance = this.distances[peer].received - this.distances[peer].sent
         // this.distances[peer].distance = [...this.distances[peer].distance, distance]
         this.distances[peer].distance = distance
-        console.log("distances", this.distances)
+        // console.log("distances", this.distances)
     }
+    
     next(peer) {
         this.ping(peer)
     }
+
     ping_all() {
         this.peers = this.core.getPeers()
         for (let peer in this.peers) {
@@ -101,8 +107,8 @@ class Node {
         this.core.whisper(peer, "identify")
     }
     identify_all() {
-        let peers = this.core.getPeers()
-        for (let peer in peers) this.identify(peer)
+        this.peers = this.core.getPeers()
+        for (let peer in this.peers) this.identify(peer)
     }
 
 
