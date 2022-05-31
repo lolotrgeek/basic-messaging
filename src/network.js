@@ -51,8 +51,7 @@ class Node {
     }
 
     send(channel, message) {
-        this.join(channel)
-        this.core.shout(channel, message)
+        this.started.then(() => this.core.shout(channel, message))
     }
 
 }
