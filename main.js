@@ -1,2 +1,2 @@
-const { Node } = require("./src/network")
-module.exports = { Node }
+const { send, listen } = require("./src/network")
+module.exports = { send, listen }
