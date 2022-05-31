@@ -51,6 +51,7 @@ class Node {
     }
 
     send(channel, message) {
+        this.join(channel)
         this.core.shout(channel, message)
     }
 
