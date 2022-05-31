@@ -24,14 +24,16 @@ class Node {
         return this.channels.find(joined_channel => joined_channel === channel)
     }
 
+    joining(channel) {
+        if (this.debug) console.log(`Joining Channel: ${typeof channel}::${channel}`)
+        this.core.join(channel)
+        this.channels.push(channel)        
+    }
+
     join(channel) {
         if (typeof channel !== "string") return false
         this.started.then(() => {
-            if (!this.joined(channel)) {
-                if (this.debug) console.log(`Joining Channel: ${typeof channel}::${channel}`)
-                this.core.join(channel)
-                this.channels.push(channel)
-            }
+            if (!this.joined(channel)) this.joining(channel)
         })
     }
 
