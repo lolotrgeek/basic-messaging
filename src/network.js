@@ -1,46 +1,54 @@
 const Zyre = require('zyre.js')
 
-const debug = false
+class Node {
+    /**
+     * 
+     * @param {function} channel name of channel to join
+     */
+    constructor(channel) {
+        this.debug = true
+        this.core = new Zyre()
+        this.started = this.core.start()
+        this.channels = []
+        if (this.debug === "network") {
+            console.log(`Core:`, this.core)
+            this.core.on('disconnect', console.log)
+            this.core.on('expired', console.log)
+            this.core.on('leave', console.log)
+            this.core.on('connect', console.log)
+            this.core.on('join', console.log)
+        }
+    }
 
-const core = new Zyre()
-const channels = []
-let started = false
+    joined(channel) {
+        return this.channels.find(joined_channel => joined_channel === channel)
+    }
 
-function joined(channel) {
-    return channels.find(joined_channel => joined_channel === channel)
+    join(channel) {
+        if (typeof channel !== "string") return false
+        this.started.then(() => {
+            if (!this.joined(channel)) {
+                if (this.debug) console.log(`Joining Channel: ${typeof channel}::${channel}`)
+                this.core.join(channel)
+                this.channels.push(channel)
+            }
+        })
+    }
+
+    listening(listener, channel, message, group) {
+        if (typeof listener === 'function' && group === channel) listener(message)
+    }
+
+    listen(channel, listener) {
+        this.join(channel)
+        this.core.on("shout", (id, name, message, group) => this.listening(listener, channel, message, group))
+    }
+
+    send(channel, message) {
+        this.core.shout(channel, message)
+    }
+
 }
 
-function join(channel) {
-    core.join(channel)
-    channels.push(channel)
-}
 
-function start(channel) {
-    join(channel)
-    started = true
-}
-
-/**
- * 
- * @param {string} channel  name of channel to listen to
- * @param {function} listener handle incoming messages
- */
-function listen(channel, listener) {
-    if (started === false) core.start().then(() => start(channel))
-    if (channel && !joined(channel)) join(channel)
-    if (typeof listener === 'function') core.on("shout", (id, name, message, group) => listener(message))
-    if (debug) console.log(`Listener "${channel}" Added:`, core.getGroup(channel))
-}
-
-/**
- * 
- * @param {string} channel 
- * @param {*} message 
- */
-function send(channel, message) {
-    core.shout(channel, message)
-}
-
-if (debug) this.core.on('disconnect', console.log)
-
-module.exports = { send, listen }
+module.exports = { Node }
