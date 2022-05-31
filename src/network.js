@@ -1,9 +1,9 @@
 const Zyre = require('zyre.js')
 
 class Node {
-    constructor() {
-        this.debug = false
-        this.core = new Zyre()
+    constructor(name) {
+        this.debug = true
+        this.core = new Zyre({ name })
         this.started = this.core.start()
         this.channels = []
         if (this.debug === "network") {
@@ -23,7 +23,7 @@ class Node {
     joining(channel) {
         if (this.debug) console.log(`Joining Channel: ${typeof channel}::${channel}`)
         this.core.join(channel)
-        this.channels.push(channel)        
+        this.channels.push(channel)
     }
 
     join(channel) {
@@ -33,12 +33,20 @@ class Node {
         })
     }
 
+    join_all(){
+        let groups = this.core.getGroups()
+        for (let group in groups) {
+            this.join(group)
+        }
+    }
+
     listening(listener, channel, message, group) {
         if (typeof listener === 'function' && group === channel) listener(message)
     }
 
     listen(channel, listener) {
-        this.join(channel)
+        if(channel === "*") this.join_all()
+        else this.join(channel)
         this.core.on("shout", (id, name, message, group) => this.listening(listener, channel, message, group))
     }
 
