@@ -1,12 +1,8 @@
 const Zyre = require('zyre.js')
 
 class Node {
-    /**
-     * 
-     * @param {function} channel name of channel to join
-     */
-    constructor(channel) {
-        this.debug = true
+    constructor() {
+        this.debug = false
         this.core = new Zyre()
         this.started = this.core.start()
         this.channels = []
