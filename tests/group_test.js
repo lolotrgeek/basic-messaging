@@ -10,5 +10,8 @@ node.listen("alright", heard)
 
 setTimeout(() => node2.listen("*", heard), 1000)
 
-setInterval(() => node.send("hello", "world"), 1000)
+setInterval(() => {
+    console.log("sending hello")
+    node.send("hello", "world")
+}, 2000)
 //fails if we do not hear "world"

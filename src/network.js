@@ -33,10 +33,11 @@ class Node {
         })
     }
 
-    join_all(){
+    join_all(listener){
         let groups = this.core.getGroups()
-        for (let group in groups) {
-            this.join(group)
+        for (let channel in groups) {
+            this.join(channel)
+            this.core.on("shout", (id, name, message, group) => this.listening(listener, channel, message, group))
         }
     }
 
@@ -45,13 +46,13 @@ class Node {
     }
 
     listen(channel, listener) {
-        if(channel === "*") this.join_all()
+        if(channel === "*") this.join_all(listener)
         else this.join(channel)
         this.core.on("shout", (id, name, message, group) => this.listening(listener, channel, message, group))
     }
 
     send(channel, message) {
-        this.started.then(() => this.core.shout(channel, message))
+        this.core.shout(channel, message)
     }
 
 }
