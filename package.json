@@ -9,7 +9,5 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "dependencies": {
-    "zyre.js": "^1.2.2"
-  }
+  "dependencies": {}
 }
