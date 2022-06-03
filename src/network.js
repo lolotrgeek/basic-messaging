@@ -1,4 +1,4 @@
-const Zyre = require('zyre.js')
+const { Subscriber, Publisher } = require('cote')
 
 class Node {
     constructor(name) {
@@ -33,7 +33,7 @@ class Node {
         })
     }
 
-    join_all(listener){
+    join_all(listener) {
         let groups = this.core.getGroups()
         for (let channel in groups) {
             this.join(channel)
@@ -46,7 +46,7 @@ class Node {
     }
 
     listen(channel, listener) {
-        if(channel === "*") this.join_all(listener)
+        if (channel === "*") this.join_all(listener)
         else this.join(channel)
         this.core.on("shout", (id, name, message, group) => this.listening(listener, channel, message, group))
     }
