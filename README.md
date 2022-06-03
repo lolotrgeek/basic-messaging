@@ -1,7 +1,7 @@
 # Basic
 Process oscillating node networking.
 
-## Explaination
+## Explanation
 A node represents a computational unit that either preserves state or changes state.
 
 An `inverter` node receives a state, changes that state to be either `0` or `1`, stores the state, then sends the state to it's neighbor.
