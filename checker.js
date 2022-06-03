@@ -8,3 +8,5 @@ console.log(node.core._name)
 listen("*", console.log)
 
 // setInterval(() => console.log(node.core.getPeers()), 2000)
+
+

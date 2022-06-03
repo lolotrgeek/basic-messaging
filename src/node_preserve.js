@@ -18,26 +18,27 @@ function last(node) {
 function preserve(id) {
     try {
         let node = new Node(id)
-        let internal_state = 0
+        node.state = 0
 
-        const up = state => {
+        const up = node => {
             let neighbor = (parseInt(id) + 1).toString()
-            log(`${id} Sending ${state} to ${neighbor}`)
-            return setTimeout(() => node.send(neighbor, state), 1000)
+            log(`${id} Sending ${node.state} to ${neighbor}`)
+            return setTimeout(() => node.send(neighbor, node.state), 1000)
         }
 
-        const down = state => {
+        const down = node => {
             let neighbor = (parseInt(id) - 1).toString()
-            log(`${id} Sending ${state} to ${neighbor}`)
-            return setTimeout(() => node.send(neighbor, state), 1000)}
+            log(`${id} Sending ${node.state} to ${neighbor}`)
+            return setTimeout(() => node.send(neighbor, node.state), 1000)
+        }
 
         node.listen(id, (state, from) => {
-            internal_state = state
+            node.state = state
             let is_last = last(node)
-            if (is_last) down(internal_state)
-            else if (parseInt(from) > parseInt(id)) down(internal_state)
-            else up(internal_state)
-            log(`id: ${id} | ${internal_state}`)
+            if (is_last) down(node)
+            else if (parseInt(from) > parseInt(id)) down(node)
+            else up(node)
+            log(`id: ${id} | ${node.state}`)
         })
     } catch (error) {
         log(`preserve ${error}`)
