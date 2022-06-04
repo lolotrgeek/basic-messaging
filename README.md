@@ -11,3 +11,8 @@ A `preserver` node receives a state, stores it, then sends the state to it's upw
 A node is `above` another node if it has a larger `id` number.
 
 A node is `below` another node if it has has a smaller `id` number.
+
+## Features
+- relational positioning
+- state preservation
+- fault tolerance
