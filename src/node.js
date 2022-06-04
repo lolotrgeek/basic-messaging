@@ -38,7 +38,7 @@ class Node {
         let groups = this.core.getGroups()
         for (let channel in groups) {
             this.join(channel)
-            this.core.on("shout", (id, name, message, group) => this.listening(listener, channel, message, group))
+            this.core.on("shout", (id, name, message, group) => this.listening(listener, channel, message, group, name))
         }
     }
 
@@ -54,8 +54,7 @@ class Node {
     listen(channel, listener) {
         if(channel === "*") this.join_all(listener)
         else this.join(channel)
-        this.core.on("shout", (id, name, message, group) => this.listening(listener, channel, message, group, name))
-        
+        this.core.on("shout", (id, name, message, group) => this.listening(listener, channel, message, group, name))        
     }
 
     send(channel, message) {
