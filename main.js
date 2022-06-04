@@ -1,5 +1,4 @@
 const { spawn_node } = require("./src/process")
+const { Node } = require("./src/node")
 
-spawn_node(5)
-
-module.exports = {  }
+module.exports = { spawn_node, Node }
