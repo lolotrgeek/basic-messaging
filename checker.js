@@ -1,12 +1,18 @@
 const { Node } = require("./src/node")
 const node = new Node("checker")
-const listen = () => node.listen
-const send = () => node.send
 
 console.log(node.core._name)
 
-listen("*", console.log)
+let peers = []
 
-// setInterval(() => console.log(node.core.getPeers()), 2000)
+setInterval(() => {
+    let new_peers = Object.values(node.core.getPeers())
+    if(new_peers.length > peers) {
+        console.log(new_peers)
+        node.core.removeAllListeners()
+        node.listen("*", (message, from) => console.log(`Heard: ${message}, From: ${from}`))
+        peers = new_peers
+    }
+}, 2000)
 
 
