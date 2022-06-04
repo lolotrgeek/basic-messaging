@@ -29,7 +29,8 @@ function last(node) {
     try {
         let id = node.core._name
         let peers = Object.values(node.core.getPeers())
-        let is_last = peers.every(peer => parseInt(peer.name) < parseInt(id))
+        let only_nodes = peers.filter(peer => !isNaN(parseInt(peer.name)))
+        let is_last = only_nodes.every(node => parseInt(node.name) < parseInt(id))
         if (is_last) log(`id: ${id} | I'm last.`)
         return is_last
     } catch (error) {
