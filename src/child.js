@@ -6,9 +6,9 @@ const debug = false
 function Child(service) {
     if (process.send && debug) process.send({ starting: service.name })
     process.on('message', message => {
-        if (typeof message.id === "number") {
+        if (message.start) {
             try {
-                service(message.id.toString())
+                service()
             } catch (error) {
                 process.send(error)
                 // process.exit()

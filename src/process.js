@@ -4,18 +4,17 @@ const { fork } = require('child_process')
 const debug = false
 let nodes = []
 
-function set_node(id) {
+function set_node() {
     let dir = path.join(__dirname)
-    let file = dir+"/node_preserve.js"
-    if(id === 1) file = dir+"/node_invert.js"
-    return {file, id}
+    let file = dir+"/node_oscillate.js"
+    return {file}
 }
 
-function start_node({file, id}) {
+function start_node({file}) {
     let node = fork(file, { stdio: ['ignore', 'ignore', 'ignore', 'ipc'] })
     node.on('message', message => console.log(message))
     node.on("close", code => console.log(`child node ${id} process exited with code ${code}`))
-    node.send({ id })
+    node.send({ start: true })
     nodes.push(node)
 }
 

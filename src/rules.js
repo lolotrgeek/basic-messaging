@@ -1,38 +1,22 @@
 const log = message => process.send ? process.send(message) : console.log(message)
 
-const up = node => {
+
+
+function location(node) {
     try {
-        let id = node.core._name
-        let neighbor = (parseInt(id) + 1).toString()
-        log(`${id} Sending ${node.state} to ${neighbor}`)
-        return setTimeout(() => node.send(neighbor, node.state), 1000)
-    } catch (error) {
-        log(`up ${error}`)
-    }
-
-}
-
-
-const down = node => {
-    try {
-        let id = node.core._name
-        let neighbor = (parseInt(id) - 1).toString()
-        log(`${id} Sending ${node.state} to ${neighbor}`)
-        return setTimeout(() => node.send(neighbor, node.state), 1000)
-    } catch (error) {
-        log(`down ${error}`)
-    }
-
-}
-
-function last(node) {
-    try {
-        let id = node.core._name
+        let name = node.core._name
         let peers = Object.values(node.core.getPeers())
         let only_nodes = peers.filter(peer => !isNaN(parseInt(peer.name)))
-        let is_last = only_nodes.every(node => parseInt(node.name) < parseInt(id))
-        if (is_last) log(`id: ${id} | I'm last.`)
-        return is_last
+        let is_first = only_nodes.every(node => parseInt(node.name) < parseInt(name))
+        if (is_first) {
+            log(`name: ${name} | I'm first.`)
+            return is_first
+        }
+        let is_last = only_nodes.every(node => parseInt(node.name) < parseInt(name))
+        if (is_last) {
+            log(`name: ${name} | I'm last.`)
+            return is_last
+        }
     } catch (error) {
         log(`last ${error}`)
     }
@@ -40,12 +24,12 @@ function last(node) {
 
 function start(node) {
     try {
-        let id = node.core._name
+        let name = node.core._name
         let peers = Object.values(node.core.getPeers())
-        let neighbor = (parseInt(id) + 1).toString()
+        let neighbor = (parseInt(name) + 1).toString()
         let found = peers.find(peer => peer.name === neighbor)
         if (found) {
-            log(`${id} Sending ${node.state} to ${neighbor}`)
+            log(`${name} Sending ${node.state} to ${neighbor}`)
             node.send(neighbor, node.state)
         }
         else setTimeout(() => start(node), 1000)
@@ -56,4 +40,4 @@ function start(node) {
 }
 
 
-module.exports = { up, down, last, start, log }
+module.exports = { up, down, location, start, log }
