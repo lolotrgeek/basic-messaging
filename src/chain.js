@@ -13,8 +13,7 @@ class Chain {
         if(chain.length > this.current.length) this.current = chain
     }
 
-    update(chain, data) {
-        if (chain && this.isChain(chain)) this.chooseLongest(chain)
+    update(data) {
         if (data) this.current.push(data)
     }
 }

@@ -6,21 +6,21 @@ let nodes = []
 
 function set_node() {
     let dir = path.join(__dirname)
-    let file = dir+"/node_oscillate.js"
+    let file = dir+"/oscillate.js"
     return {file}
 }
 
 function start_node({file}) {
     let node = fork(file, { stdio: ['ignore', 'ignore', 'ignore', 'ipc'] })
     node.on('message', message => console.log(message))
-    node.on("close", code => console.log(`child node ${id} process exited with code ${code}`))
+    node.on("close", code => console.log(`child node process exited with code ${code}`))
     node.send({ start: true })
     nodes.push(node)
 }
 
 function spawn_node(number) {
     if(debug) console.log(`Starting node ${nodes.length + 1}/${number}`)
-    start_node(set_node(nodes.length + 1))
+    start_node(set_node())
     if(nodes.length < number) setTimeout(() => spawn_node(number), 500)
     
 }
