@@ -7,6 +7,7 @@ class Node {
         this.started = this.core.start()
         this.state = 0
         this.channels = []
+        this.core.setEncoding('utf8')
         if (this.debug === "network") {
             console.log(`Core:`, this.core)
             this.core.on('disconnect', console.log)
@@ -48,7 +49,7 @@ class Node {
      * @param {string} channel 
      * @param {*} message 
      * @param {string} group 
-     * @param {string} from  id of node that sent the message
+     * @param {string} from  name of node that sent the message
      */
     listening(listener, channel, message, group, from) {
         if (typeof listener === 'function' && group === channel) listener(message, from)
