@@ -49,16 +49,16 @@ class Node {
      * @param {string} channel 
      * @param {*} message 
      * @param {string} group 
-     * @param {string} from  name of node that sent the message
+     * @param {string} name  name of node that sent the message
      */
-    listening(listener, channel, message, group, from) {
-        if (typeof listener === 'function' && group === channel) listener(message, from)
+    listening(listener, channel, message, group, name) {
+        if (typeof listener === 'function' && group === channel) listener(message, name)
     }
 
     /**
      * 
      * @param {*} channel 
-     * @param {function} listener `(message: string, from?: any)`
+     * @param {function} listener `(message: string, name?: any)`
      */
     listen(channel, listener) {
         if(channel === "*") this.join_all(listener)
