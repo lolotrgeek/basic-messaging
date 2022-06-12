@@ -59,32 +59,93 @@ class Oscillate {
         }
     }
 
-    selectNeighbor(self_location) {
+    /**
+     * Selects a the above neighbor node
+     * @param {*} self_location 
+     * @returns 
+     */
+     selectNeighborAbove(self_location) {
         try {
             let neighbor_up = this.chain.blocks[self_location + 1]
-            let neighbor_down = this.chain.blocks[self_location - 1]
             if (this.isValidNeighbor(neighbor_up)) return this.getNeighborName(neighbor_up)
-            else if (this.isValidNeighbor(neighbor_down)) return this.getNeighborName(neighbor_down)
             else return null
+        } catch (error) {
+            log(`selectNeighborAbove ${error}`)
+        }
+    }
+
+    /**
+     * Selects a the below neighbor node
+     * @param {*} self_location 
+     * @returns 
+     */
+     selectNeighborBelow(self_location) {
+        try {
+            let neighbor_down = this.chain.blocks[self_location - 1]
+            if (this.isValidNeighbor(neighbor_down)) return this.getNeighborName(neighbor_down)
+            else return null
+        } catch (error) {
+            log(`selectNeighborBelow ${error}`)
+        }
+    }
+
+    /**
+     * Selects a the neighbor node, first looking above then below
+     * @param {*} self_location 
+     * @returns 
+     */
+     selectNeighbor(self_location) {
+        try {
+            let neighbor_above = this.selectNeighborAbove(self_location)
+            if (neighbor_above) return neighbor_above
+            let neighbor_below = this.selectNeighborBelow(self_location)
+            if (neighbor_below) return neighbor_below
+            return null
         } catch (error) {
             log(`selectNeighbor ${error}`)
         }
     }
-
+    
+    /**
+     * The index of a block is a node's location
+     * @returns 
+     */
     getSelfLocation() {
         try {
-            // the index of a block is a node's location
             let location = this.chain.blocks.findIndex(block => block.data === this.name)
             return location > -1 ? location : null
         } catch (error) {
             log(`getSelfLocation: ${error}`)
         }
-
     }
 
+    /**
+     * The position is either first `1` , last `-1` or inbetween `0`
+     * @returns 
+     */
+    getPosition(location) {
+        try {
+            if (location && location === 0) {
+                log(`location : ${location} | I'm first.`)
+                return 1
+            }
+            else if (location && location === this.chain.blocks.length - 1) {
+                log(`location : ${location} | I'm last.`)
+                return -1
+            }
+            else return 0
+        } catch (error) {
+            log(`getPosition: ${error}`)
+
+        }
+    }
+
+    /**
+     * Adds a block to the local chain with the block data being the given node's name
+     * @param {string} name is from node.core, and defined as `this.name` but to invoke peers this method allows for passing a `name`
+     */
     update(name) {
         try {
-            // the data of a block is the this.node's name
             this.chain.put(name)
             this.node.send(name, encode(this.chain))
         } catch (error) {
@@ -124,6 +185,7 @@ class Oscillate {
             if (this.chain && this.chain.isValid(this.chain)) setInterval(() => {
                 try {
                     let self_location = this.getSelfLocation()
+                    let position = this.getPosition(self_location)
                     log(`${this.name} location ${self_location} -> chain ${this.chain.id}`)
                     if (self_location) {
                         let neighbor_name = this.selectNeighbor(self_location)
