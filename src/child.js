@@ -10,7 +10,7 @@ function Child(service) {
             try {
                 service()
             } catch (error) {
-                process.send(error)
+                process.send(`process ${error}`)
                 // process.exit()
             }
         }
