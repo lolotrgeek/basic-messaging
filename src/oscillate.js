@@ -25,7 +25,7 @@ class Oscillate {
 
     sendState(to) {
         try {
-            this.node.send(to, encode({ chain_id: this.chain.id, state: this.state }))
+            setTimeout(() => this.node.send(to, encode({ chain_id: this.chain.id, state: this.state })), 1000)
         } catch (error) {
             log(`sendState ${error}`)
         }
@@ -43,7 +43,7 @@ class Oscillate {
 
     isValidNeighbor(neighbor_block) {
         try {
-            log(`isValidNeighbor? ${neighbor_block.data}`)
+            // log(`isValidNeighbor? ${neighbor_block.data}`)
             return neighbor_block && typeof neighbor_block.data === 'string'
         } catch (error) {
             log(`isValidNeighbor ${error}`)
@@ -110,9 +110,9 @@ class Oscillate {
      * The index of a block is a node's location
      * @returns 
      */
-    getSelfLocation() {
+    getLocation(name) {
         try {
-            let location = this.chain.blocks.findIndex(block => block.data === this.name)
+            let location = this.chain.blocks.findIndex(block => block.data === name)
             return location > -1 ? location : null
         } catch (error) {
             log(`getSelfLocation: ${error}`)
@@ -153,12 +153,43 @@ class Oscillate {
             if (this.chain.isValid(data)) {
                 // log(data.blocks)
                 this.chain.merge(data)
-                if(this.debug === 'chain') log(this.chain ? `Merged ${this.chain}` : "broken chain...")
+                if (this.debug === 'chain') log(this.chain ? `Merged ${this.chain}` : "broken chain...")
                 // log(`${this.name} : ${this.chain.blocks.length}`)
             }
             else if (isState(data)) {
                 if (data.chain_id === this.chain.id) {
-                    if(data.state) this.sayState(data.state, name)
+                    if (data.state) {
+                        // this.sayState(data.state, name)
+                        let self_location = this.getLocation(this.name)
+                        if (self_location === null) return
+
+                        let position = this.getPosition(self_location)
+
+                        let recpient
+                        if (position === 1) {
+                            log(`${this.name} | I'm first.`)
+                            this.state = invert_state(this.state)
+                            recpient = this.selectNeighborAbove(self_location)
+                        }
+
+                        if (position === 0) {
+                            let sender_location = this.getLocation(name)
+                            this.state = data.state
+                            if (sender_location > self_location) recpient = this.selectNeighborBelow(self_location)
+                            if (sender_location < self_location) recpient = this.selectNeighborAbove(self_location)
+                        }
+
+                        if (position === -1) {
+                            log(`${this.name} | I'm last.`)
+                            this.state = data.state
+                            recpient = this.selectNeighborBelow(self_location)
+                        }
+                        // log(`${this.name} location ${self_location} -> chain ${this.chain.id}`)
+                        if (typeof recpient === 'string') {
+                            log(`${this.name} sending state ${this.state} to ${recpient}`)
+                            this.sendState(recpient)
+                        }
+                    }
                 }
                 else this.node.send(name, encode(this.chain))
             }
@@ -177,18 +208,20 @@ class Oscillate {
 
     run() {
         try {
-            if (this.chain && this.chain.isValid(this.chain)) setInterval(() => {
+            if (this.chain && this.chain.isValid(this.chain)) setTimeout(() => {
                 try {
-                    let self_location = this.getSelfLocation()
+                    let self_location = this.getLocation(this.name)
                     if (self_location === null) return
 
                     let position = this.getPosition(self_location)
+                    if (position === 1) this.state = invert_state(this.state)
 
                     if (this.debug === 'location') {
                         if (position === 1) log(`location : ${self_location} | I'm first.`)
                         log(`${this.name} location ${self_location} -> chain ${this.chain.id}`)
                         if (position === -1) log(`location : ${self_location} | I'm last.`)
                     }
+
                     let neighbor_name = this.selectNeighbor(self_location)
                     log(`Neighbor name: ${neighbor_name}`)
                     if (typeof neighbor_name === 'string') {
