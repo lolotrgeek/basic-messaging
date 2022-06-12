@@ -11,12 +11,13 @@ class Oscillate {
         try {
             this.node = new Node()
             this.chain = new Chain()
-            this.chain.debug = true
+            this.chain.debug = false
             this.name = this.node.core._name
             this.chain.put(this.name)
             this.state = -1
             this.interval = 5000
             this.spinner = spin => setInterval(spin, this.interval)
+            this.debug = false
         } catch (error) {
             log(`constructor: ${error}`)
         }
@@ -24,7 +25,7 @@ class Oscillate {
 
     sendState(to) {
         try {
-            setTimeout(() => this.node.send(to, encode({ chain_id: this.chain.id, state: this.node.state })), 1000)
+            this.node.send(to, encode({ chain_id: this.chain.id, state: this.state }))
         } catch (error) {
             log(`sendState ${error}`)
         }
@@ -33,9 +34,7 @@ class Oscillate {
 
     sayState(state, name) {
         try {
-            let neighbor_position = this.chain.blocks.findIndex(block => block.data === name)
-            if (neighbor_position > -1) log(`neighbor position: ${neighbor_position}`)
-            else log(`neighbor${name} not found`)
+            log(`Heard: state ${state} from ${name}`)
         } catch (error) {
             log(`sayState ${error}`)
         }
@@ -44,7 +43,8 @@ class Oscillate {
 
     isValidNeighbor(neighbor_block) {
         try {
-            return neighbor_block && typeof neighbor_block.data === 'object'
+            log(`isValidNeighbor? ${neighbor_block.data}`)
+            return neighbor_block && typeof neighbor_block.data === 'string'
         } catch (error) {
             log(`isValidNeighbor ${error}`)
         }
@@ -64,7 +64,7 @@ class Oscillate {
      * @param {*} self_location 
      * @returns 
      */
-     selectNeighborAbove(self_location) {
+    selectNeighborAbove(self_location) {
         try {
             let neighbor_up = this.chain.blocks[self_location + 1]
             if (this.isValidNeighbor(neighbor_up)) return this.getNeighborName(neighbor_up)
@@ -79,7 +79,7 @@ class Oscillate {
      * @param {*} self_location 
      * @returns 
      */
-     selectNeighborBelow(self_location) {
+    selectNeighborBelow(self_location) {
         try {
             let neighbor_down = this.chain.blocks[self_location - 1]
             if (this.isValidNeighbor(neighbor_down)) return this.getNeighborName(neighbor_down)
@@ -94,7 +94,7 @@ class Oscillate {
      * @param {*} self_location 
      * @returns 
      */
-     selectNeighbor(self_location) {
+    selectNeighbor(self_location) {
         try {
             let neighbor_above = this.selectNeighborAbove(self_location)
             if (neighbor_above) return neighbor_above
@@ -105,7 +105,7 @@ class Oscillate {
             log(`selectNeighbor ${error}`)
         }
     }
-    
+
     /**
      * The index of a block is a node's location
      * @returns 
@@ -120,23 +120,16 @@ class Oscillate {
     }
 
     /**
-     * The position is either first `1` , last `-1` or inbetween `0`
-     * @returns 
+     * The position 
+     * @returns first `1` , last `-1` or inbetween `0`
      */
     getPosition(location) {
         try {
-            if (location && location === 0) {
-                log(`location : ${location} | I'm first.`)
-                return 1
-            }
-            else if (location && location === this.chain.blocks.length - 1) {
-                log(`location : ${location} | I'm last.`)
-                return -1
-            }
-            else return 0
+            if (typeof location === 'number' && location === 0) return 1
+            if (typeof location === 'number' && location === this.chain.blocks.length - 1) return -1
+            return 0
         } catch (error) {
             log(`getPosition: ${error}`)
-
         }
     }
 
@@ -160,11 +153,13 @@ class Oscillate {
             if (this.chain.isValid(data)) {
                 // log(data.blocks)
                 this.chain.merge(data)
-                log(this.chain ? `Merged ${this.chain}` : "broken chain...")
+                if(this.debug === 'chain') log(this.chain ? `Merged ${this.chain}` : "broken chain...")
                 // log(`${this.name} : ${this.chain.blocks.length}`)
             }
             else if (isState(data)) {
-                if (data.chain_id === this.chain.id) sayState(data, name)
+                if (data.chain_id === this.chain.id) {
+                    if(data.state) this.sayState(data.state, name)
+                }
                 else this.node.send(name, encode(this.chain))
             }
         } catch (error) {
@@ -185,11 +180,20 @@ class Oscillate {
             if (this.chain && this.chain.isValid(this.chain)) setInterval(() => {
                 try {
                     let self_location = this.getSelfLocation()
+                    if (self_location === null) return
+
                     let position = this.getPosition(self_location)
-                    log(`${this.name} location ${self_location} -> chain ${this.chain.id}`)
-                    if (self_location) {
-                        let neighbor_name = this.selectNeighbor(self_location)
-                        if (neighbor_name) sendState(neighbor_name)
+
+                    if (this.debug === 'location') {
+                        if (position === 1) log(`location : ${self_location} | I'm first.`)
+                        log(`${this.name} location ${self_location} -> chain ${this.chain.id}`)
+                        if (position === -1) log(`location : ${self_location} | I'm last.`)
+                    }
+                    let neighbor_name = this.selectNeighbor(self_location)
+                    log(`Neighbor name: ${neighbor_name}`)
+                    if (typeof neighbor_name === 'string') {
+                        log(`${this.name} sending state to ${neighbor_name}`)
+                        this.sendState(neighbor_name)
                     }
 
                 } catch (error) {
