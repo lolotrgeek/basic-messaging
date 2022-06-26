@@ -1,3 +1,4 @@
+const { randomUUID } = require('crypto')
 const { Child } = require("./child")
 const { Node } = require("./node")
 const { Chain } = require("basic-chain")
@@ -5,14 +6,15 @@ const { decode, encode, log } = require("./helpers")
 
 const isState = data => typeof data === "object" && data.state && !isNaN(data.state) && typeof data.chain_id === 'string'
 const invert_state = state => state === 0 ? 1 : 0
+const namer = () => `o_${Date.now()}_${randomUUID().substring(0,8)}`
 
 class Oscillate {
     constructor() {
         try {
-            this.node = new Node()
+            this.name = namer()
+            this.node = new Node(this.name)
             this.chain = new Chain()
             this.chain.debug = false
-            this.name = this.node.core._name
             this.chain.put(this.name)
             this.state = -1
             this.interval = 5000
@@ -133,14 +135,20 @@ class Oscillate {
         }
     }
 
+    isNameValid(name) {
+        return typeof name === 'string' && name[0] === 'o' && name[1] === "_"
+    }
+
     /**
      * Adds a block to the local chain with the block data being the given node's name
      * @param {string} name is from node.core, and defined as `this.name` but to invoke peers this method allows for passing a `name`
      */
     update(name) {
         try {
-            this.chain.put(name)
-            this.node.send(name, encode(this.chain))
+            if(this.isNameValid(name)) {
+                this.chain.put(name)
+                this.node.send(name, encode(this.chain))
+            }
         } catch (error) {
             log(`update: ${error}`)
         }
@@ -154,7 +162,7 @@ class Oscillate {
                 // log(data.blocks)
                 this.chain.merge(data)
                 if (this.debug === 'chain') log(this.chain ? `Merged ${this.chain}` : "broken chain...")
-                // log(`${this.name} : ${this.chain.blocks.length}`)
+                log(this.chain.blocks)
             }
             else if (isState(data)) {
                 if (data.chain_id === this.chain.id) {
