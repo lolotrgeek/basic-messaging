@@ -174,27 +174,36 @@ class Oscillate {
                         let position = this.getPosition(self_location)
 
                         let recpient
+                        let direction
                         if (position === 1) {
                             log(`${this.name} | I'm first.`)
                             this.state = invert_state(this.state)
                             recpient = this.selectNeighborAbove(self_location)
+                            direction = 'up'
                         }
 
                         if (position === 0) {
                             let sender_location = this.getLocation(name)
                             this.state = data.state
-                            if (sender_location > self_location) recpient = this.selectNeighborBelow(self_location)
-                            if (sender_location < self_location) recpient = this.selectNeighborAbove(self_location)
+                            if (sender_location > self_location) {
+                                recpient = this.selectNeighborBelow(self_location)
+                                direction = 'down'
+                            }
+                            if (sender_location < self_location) {
+                                recpient = this.selectNeighborAbove(self_location)
+                                direction = 'up'
+                            }
                         }
 
                         if (position === -1) {
                             log(`${this.name} | I'm last.`)
                             this.state = data.state
                             recpient = this.selectNeighborBelow(self_location)
+                            direction = 'down'
                         }
                         // log(`${this.name} location ${self_location} -> chain ${this.chain.id}`)
                         if (typeof recpient === 'string') {
-                            log(`${this.name} sending state ${this.state} to ${recpient}`)
+                            log(`${this.name} sending state ${this.state} ${direction} to ${recpient}`)
                             this.sendState(recpient)
                         }
                     }
