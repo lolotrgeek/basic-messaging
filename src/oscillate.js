@@ -28,7 +28,7 @@ class Oscillate {
     }
 
     buildState() {
-        try { return encode({ chain_id: this.chain.id, state: this.state, position: this.position, direction: this.direction }) } catch (error) { log(`buildState ${error}`) }
+        try { return encode({ chain_id: this.chain.id, state: this.state, location: this.location, direction: this.direction }) } catch (error) { log(`buildState ${error}`) }
     }
 
     sendState(to) {
@@ -216,7 +216,7 @@ class Oscillate {
 
                     this.recpient = this.selectNeighbor(this.location)
                     if (typeof this.recpient === 'string') {
-                        log(`CHAIN ${this.chain_id} | LOCATION ${this.location} | ${this.position} | ${this.name} | [${this.direction} ${this.state}] --> ${this.recpient}`)
+                        log(`LOCATION ${this.location} | ${this.position} | ${this.name} | [${this.direction} ${this.state}] --> ${this.recpient}`)
                         this.sendState(this.recpient)
                     }
 
