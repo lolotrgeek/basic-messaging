@@ -16,6 +16,9 @@ class Oscillate {
             this.state = -1
             this.interval = 5000
             this.debug = false
+            this.location
+            this.direction
+            this.position
             this.spinner = spin => setInterval(spin, this.interval)
             this.isState = data => typeof data === "object" && data.state && !isNaN(data.state) && typeof data.chain_id === 'string'
             this.invert_state = state => state === 0 ? 1 : 0
@@ -24,8 +27,12 @@ class Oscillate {
         }
     }
 
+    buildState() {
+        try { return encode({ chain_id: this.chain.id, state: this.state, position: this.position, direction: this.direction }) } catch (error) { log(`buildState ${error}`) }
+    }
+
     sendState(to) {
-        try { setTimeout(() => this.node.send(to, encode({ chain_id: this.chain.id, state: this.state })), 1000) } catch (error) { log(`sendState ${error}`) }
+        try { setTimeout(() => this.node.send(to, this.buildState()), 1000) } catch (error) { log(`sendState ${error}`) }
     }
 
     sayState(state, name) {
@@ -91,7 +98,7 @@ class Oscillate {
         try {
             let location = this.chain.blocks.findIndex(block => block.data === name)
             return location > -1 ? location : null
-        } catch (error) { log(`getSelfLocation: ${error}`) }
+        } catch (error) { log(`getLocation: ${error}`) }
     }
 
     /**
@@ -139,42 +146,40 @@ class Oscillate {
             else if (this.isState(data)) {
                 if (data.chain_id === this.chain.id) {
                     if (data.state) {
-                        let self_location = this.getLocation(this.name)
-                        if (self_location === null) return
-                        let position = this.getPosition(self_location)
-                        let recpient
-                        let direction
+                        this.location = this.getLocation(this.name)
+                        if (this.location === null) return
+                        this.position = this.getPosition(this.location)
 
-                        if (position === 'first') {
+                        if (this.position === 'first') {
                             // log(`${this.name} | I'm first.`)
                             this.state = this.invert_state(this.state)
-                            recpient = this.selectNeighborAbove(self_location)
-                            direction = 'up'
+                            this.recpient = this.selectNeighborAbove(this.location)
+                            this.direction = 'up'
                         }
 
-                        if (position === 'middle') {
+                        if (this.position === 'middle') {
                             let sender_location = this.getLocation(name)
                             this.state = data.state
-                            if (sender_location > self_location) {
-                                recpient = this.selectNeighborBelow(self_location)
-                                direction = 'down'
+                            if (sender_location > this.location) {
+                                this.recpient = this.selectNeighborBelow(this.location)
+                                this.direction = 'down'
                             }
-                            if (sender_location < self_location) {
-                                recpient = this.selectNeighborAbove(self_location)
-                                direction = 'up'
+                            if (sender_location < this.location) {
+                                this.recpient = this.selectNeighborAbove(this.location)
+                                this.direction = 'up'
                             }
                         }
 
-                        if (position === 'last') {
+                        if (this.position === 'last') {
                             // log(`${this.name} | I'm last.`)
                             this.state = data.state
-                            recpient = this.selectNeighborBelow(self_location)
-                            direction = 'down'
+                            this.recpient = this.selectNeighborBelow(this.location)
+                            this.direction = 'down'
                         }
-                        // log(`${this.name} location ${self_location} -> chain ${this.chain.id}`)
-                        if (typeof recpient === 'string') {
-                            log(`LOCATION ${self_location} | ${this.name} [${direction} ${this.state}] --> ${recpient}`)
-                            this.sendState(recpient)
+                        // log(`${this.name} location ${this.location} -> chain ${this.chain.id}`)
+                        if (typeof this.recpient === 'string') {
+                            log(`LOCATION ${this.location} | ${this.position} | ${this.name} | [${this.direction} ${this.state}] --> ${this.recpient}`)
+                            this.sendState(this.recpient)
                         }
                     }
                 }
@@ -197,23 +202,22 @@ class Oscillate {
         try {
             if (this.chain && this.chain.isValid(this.chain)) setTimeout(() => {
                 try {
-                    let self_location = this.getLocation(this.name)
-                    if (self_location === null) return
+                    this.location = this.getLocation(this.name)
+                    if (this.location === null) return
 
-                    let position = this.getPosition(self_location)
+                    this.position = this.getPosition(this.location)
                     // if (position === 1) this.state = this.invert_state(this.state)
 
                     if (this.debug === 'location') {
-                        if (position === 1) log(`location : ${self_location} | I'm first.`)
-                        log(`${this.name} location ${self_location} -> chain ${this.chain.id}`)
-                        if (position === -1) log(`location : ${self_location} | I'm last.`)
+                        if (this.position === 'first') log(`location : ${this.location} | I'm first.`)
+                        log(`${this.name} location ${this.location} -> chain ${this.chain.id}`)
+                        if (this.position === 'last') log(`location : ${this.location} | I'm last.`)
                     }
 
-                    let neighbor_name = this.selectNeighbor(self_location)
-                    log(`Neighbor name: ${neighbor_name}`)
-                    if (typeof neighbor_name === 'string') {
-                        log(`${this.name} sending state to ${neighbor_name}`)
-                        this.sendState(neighbor_name)
+                    this.recpient = this.selectNeighbor(this.location)
+                    if (typeof this.recpient === 'string') {
+                        log(`CHAIN ${this.chain_id} | LOCATION ${this.location} | ${this.position} | ${this.name} | [${this.direction} ${this.state}] --> ${this.recpient}`)
+                        this.sendState(this.recpient)
                     }
 
                 } catch (error) {
