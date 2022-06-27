@@ -2,7 +2,7 @@ const { Node } = require("../src/node")
 const { table } = require('table')
 const node = new Node("state_test")
 
-let headers = ["Chain", "Peer", "State", "Type"]
+let headers = ["Chain", "Peer", "State", "Location"]
 let peers = [headers]
 
 console.clear()
@@ -13,7 +13,8 @@ function listener(message, from) {
         let data = JSON.parse(message)
         if (data.state) {
             let found = peers.findIndex(peer => peer[1] === from)
-            peers[found] = [data.chain_id, from, data.state, typeof data.state]
+            peers[found] = [data.chain_id, from, data.state, parseInt(data.location)]
+            peers.sort((a,b) => a[0] === "Chain" ? 1 : a[3] - b[3])
             console.clear()
             console.log(table(peers))
         }
@@ -27,7 +28,7 @@ function addPeer(name) {
     console.clear()
     console.log(table(peers))
     if (!found) {
-        let row = ["", name, -1, 'number']
+        let row = ["", name, -1, -1]
         peers.push(row)
         node.listen(name, listener)
     }
