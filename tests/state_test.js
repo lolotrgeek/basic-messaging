@@ -2,10 +2,25 @@ const { Node } = require("../src/node")
 const { table } = require('table')
 const node = new Node("state_test")
 
-console.clear()
-
 let headers = ["Chain", "Peer", "State", "Type"]
 let peers = [headers]
+
+console.clear()
+console.log(table(peers))
+
+function listener(message, from) {
+    try {
+        let data = JSON.parse(message)
+        if (data.state) {
+            let found = peers.findIndex(peer => peer[1] === from)
+            peers[found] = [data.chain_id, from, data.state, typeof data.state]
+            console.clear()
+            console.log(table(peers))
+        }
+    } catch (error) {
+
+    }
+}
 
 function addPeer(name) {
     let found = peers.find(peer => peer[1] === name)
@@ -14,16 +29,7 @@ function addPeer(name) {
     if (!found) {
         let row = ["", name, -1, 'number']
         peers.push(row)
-        node.listen(name, (message, from) => {
-            let data = JSON.parse(message)
-            if (data.state) {
-                let found = peers.findIndex(peer => peer[1] === from)
-                
-                peers[found] = [data.chain_id, from, data.state, typeof data.state]
-                console.clear()
-                console.log(table(peers))                
-            }
-        })
+        node.listen(name, listener)
     }
 }
 
@@ -33,9 +39,9 @@ function removePeer(name) {
         let found = peers.findIndex(peer => peer[1] === name)
         peers.splice(found, 1)
         console.clear()
-        console.log(table(peers))       
+        console.log(table(peers))
     } catch (error) {
-        
+
     }
 }
 
