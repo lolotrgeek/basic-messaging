@@ -4,22 +4,21 @@ const { Node } = require("./node")
 const { Chain } = require("basic-chain")
 const { decode, encode, log } = require("./helpers")
 
-const isState = data => typeof data === "object" && data.state && !isNaN(data.state) && typeof data.chain_id === 'string'
-const invert_state = state => state === 0 ? 1 : 0
-const namer = () => `o_${Date.now()}_${randomUUID().substring(0,8)}`
 
 class Oscillate {
     constructor() {
         try {
-            this.name = namer()
+            this.name = `o_${Date.now()}_${randomUUID().substring(0,8)}`
             this.node = new Node(this.name)
             this.chain = new Chain()
             this.chain.debug = false
             this.chain.put(this.name)
             this.state = -1
             this.interval = 5000
-            this.spinner = spin => setInterval(spin, this.interval)
             this.debug = false
+            this.spinner = spin => setInterval(spin, this.interval)
+            this.isState = data => typeof data === "object" && data.state && !isNaN(data.state) && typeof data.chain_id === 'string'
+            this.invert_state = state => state === 0 ? 1 : 0
         } catch (error) {
             log(`constructor: ${error}`)
         }
@@ -164,7 +163,7 @@ class Oscillate {
                 if (this.debug === 'chain') log(this.chain ? `Merged ${this.chain}` : "broken chain...")
                 log(this.chain.blocks)
             }
-            else if (isState(data)) {
+            else if (this.isState(data)) {
                 if (data.chain_id === this.chain.id) {
                     if (data.state) {
                         // this.sayState(data.state, name)
@@ -177,7 +176,7 @@ class Oscillate {
                         let direction
                         if (position === 1) {
                             log(`${this.name} | I'm first.`)
-                            this.state = invert_state(this.state)
+                            this.state = this.invert_state(this.state)
                             recpient = this.selectNeighborAbove(self_location)
                             direction = 'up'
                         }
