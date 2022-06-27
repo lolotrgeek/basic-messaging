@@ -4,7 +4,6 @@ const { Node } = require("./node")
 const { Chain } = require("basic-chain")
 const { decode, encode, log } = require("./helpers")
 
-
 class Oscillate {
     constructor() {
         try {
@@ -83,8 +82,10 @@ class Oscillate {
     selectNeighbor(self_location) {
         try {
             let neighbor_above = this.selectNeighborAbove(self_location)
+            this.direction = 'up'
             if (neighbor_above) return neighbor_above
             let neighbor_below = this.selectNeighborBelow(self_location)
+            this.direction = 'down'
             if (neighbor_below) return neighbor_below
             return null
         } catch (error) { log(`selectNeighbor ${error}`) }
@@ -147,7 +148,10 @@ class Oscillate {
                 if (data.chain_id === this.chain.id) {
                     if (data.state) {
                         this.location = this.getLocation(this.name)
+                        let sender_location = this.getLocation(name)
                         if (this.location === null) return
+                        if (Math.abs(this.location - sender_location) > 1) return
+
                         this.position = this.getPosition(this.location)
 
                         if (this.position === 'first') {
@@ -158,7 +162,6 @@ class Oscillate {
                         }
 
                         if (this.position === 'middle') {
-                            let sender_location = this.getLocation(name)
                             this.state = data.state
                             if (sender_location > this.location) {
                                 this.recpient = this.selectNeighborBelow(this.location)
@@ -178,7 +181,23 @@ class Oscillate {
                         }
                         // log(`${this.name} location ${this.location} -> chain ${this.chain.id}`)
                         if (typeof this.recpient === 'string') {
-                            log(`LOCATION ${this.location} | ${this.position} | ${this.name} | [${this.direction} ${this.state}] --> ${this.recpient}`)
+
+                            let col1 = [
+                                [this.name],
+                                [`Chain: ${this.chain.id}`]
+                            ]
+                            let col2 = [
+                                ["location", "direction", "state"],
+                                [this.location, this.direction, this.state],
+
+                            ]
+                            let col3 = [
+                                ["Messages", "name", "location", "direction", "state"],
+                                ["received", name, sender_location, data.direction, data.state],
+                                ["sending", this.name, this.location, this.direction, this.state]
+                            ]
+                            let node = [col1, col2, col3]
+                            log(node)
                             this.sendState(this.recpient)
                         }
                     }
@@ -216,7 +235,22 @@ class Oscillate {
 
                     this.recpient = this.selectNeighbor(this.location)
                     if (typeof this.recpient === 'string') {
-                        log(`LOCATION ${this.location} | ${this.position} | ${this.name} | [${this.direction} ${this.state}] --> ${this.recpient}`)
+                        let col1 = [
+                            [this.name],
+                            [`Chain: ${this.chain.id}`]
+                        ]
+                        let col2 = [
+                            ["location", "direction", "state"],
+                            [this.location, this.direction, this.state],
+
+                        ]
+                        let col3 = [
+                            ["Messages", "name", "location", "direction", "state"],
+                            ["received", "-", "-", "-", "-"],
+                            ["sending", this.name, this.location, this.direction, this.state]
+                        ]
+                        let node = [col1, col2, col3]
+                        log(node)
                         this.sendState(this.recpient)
                     }
 
@@ -224,6 +258,7 @@ class Oscillate {
                     log(`spin: ${error}`)
                 }
             }, 5000)
+
             this.node.listen(this.name, (message, name) => this.listener(message, name))
             this.node.core.on("connect", (id, name) => this.update(name))
         } catch (error) {
