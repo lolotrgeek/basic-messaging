@@ -14,7 +14,7 @@ function listener(message, from) {
         if (data.state) {
             let found = peers.findIndex(peer => peer[1] === from)
             peers[found] = [data.chain_id, from, data.state, parseInt(data.location)]
-            peers.sort((a,b) => a[0] === "Chain" ? 1 : a[3] - b[3])
+            peers.sort((a,b) => a[0] === headers[0] ? 1 : a[3] - b[3])
             console.clear()
             console.log(table(peers))
         }
