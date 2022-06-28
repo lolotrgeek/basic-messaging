@@ -118,11 +118,79 @@ class Oscillate {
         return typeof name === 'string' && name[0] === 'o' && name[1] === "_"
     }
 
+    setState(data) {
+        try {
+            if (this.position === 'first') {
+                // log(`${this.name} | I'm first.`)
+                this.state = this.invert_state(this.state)
+                this.recpient = this.selectNeighborAbove(this.location)
+                this.direction = 'up'
+            }
+
+            if (this.position === 'middle') {
+                this.state = data.state
+                if (this.sender_location > this.location) {
+                    this.recpient = this.selectNeighborBelow(this.location)
+                    this.direction = 'down'
+                }
+                else {
+                    this.recpient = this.selectNeighborAbove(this.location)
+                    this.direction = 'up'
+                }
+                
+            }
+
+            if (this.position === 'last') {
+                // log(`${this.name} | I'm last.`)
+                this.state = data.state
+                this.recpient = this.selectNeighborBelow(this.location)
+                this.direction = 'down'
+            }
+        } catch (error) {
+            log(`setState: ${error}`)
+        }
+    }
+
+    stateCondition(data, name) {
+        return this.location && this.position && data && name && data.chain_id === this.chain.id && data.state
+    }
+
+    State(data, name) {
+        try {
+            this.location = this.getLocation(this.name)
+            this.position = this.getPosition(this.location)
+            if (this.stateCondition(data, name)) {
+                this.sender_location = this.getLocation(name)
+                this.setState(data)
+                if (typeof this.recpient === 'string') this.sendState(this.recpient)
+                log(`LOCATION ${this.location} | ${this.position} | ${this.name} | state ${this.state} [${this.direction}] --> ${this.recpient}`)
+            }
+            
+        } catch (error) {
+            log(`state: ${error}`)
+        }
+    }
+
+    listener(message, name) {
+        try {
+            let data = decode(message)
+            if (this.chain.isValid(data)) {
+                this.chain.merge(data)
+                if (this.debug === 'chain') log(this.chain ? `Merged ${this.chain}` : "broken chain...")
+            }
+            else if (this.isState(data)) this.State(data, name)
+            else this.node.send(name, encode(this.chain))
+        }
+        catch (error) {
+            log(`listener: ${error}`)
+        }
+    }
+
     /**
      * Adds a block to the local chain with the block data being the given node's name
      * @param {string} name is from node.core, and defined as `this.name` but to invoke peers this method allows for passing a `name`
      */
-    update(name) {
+     update(name) {
         try {
             if (this.isNameValid(name)) {
                 this.chain.put(name)
@@ -133,81 +201,14 @@ class Oscillate {
         }
     }
 
-
-
-    listener(message, name) {
+    run() {
         try {
-            let data = decode(message)
-            if (this.chain.isValid(data)) {
-                // log(data.blocks)
-                this.chain.merge(data)
-                if (this.debug === 'chain') log(this.chain ? `Merged ${this.chain}` : "broken chain...")
-                // log(this.chain.blocks)
-            }
-            else if (this.isState(data)) {
-                if (data.chain_id === this.chain.id) {
-                    if (data.state) {
-                        this.location = this.getLocation(this.name)
-                        let sender_location = this.getLocation(name)
-                        if (this.location === null) return
-                        if (Math.abs(this.location - sender_location) > 1) return
-
-                        this.position = this.getPosition(this.location)
-
-                        if (this.position === 'first') {
-                            // log(`${this.name} | I'm first.`)
-                            this.state = this.invert_state(this.state)
-                            this.recpient = this.selectNeighborAbove(this.location)
-                            this.direction = 'up'
-                        }
-
-                        if (this.position === 'middle') {
-                            this.state = data.state
-                            if (sender_location > this.location) {
-                                this.recpient = this.selectNeighborBelow(this.location)
-                                this.direction = 'down'
-                            }
-                            if (sender_location < this.location) {
-                                this.recpient = this.selectNeighborAbove(this.location)
-                                this.direction = 'up'
-                            }
-                        }
-
-                        if (this.position === 'last') {
-                            // log(`${this.name} | I'm last.`)
-                            this.state = data.state
-                            this.recpient = this.selectNeighborBelow(this.location)
-                            this.direction = 'down'
-                        }
-                        // log(`${this.name} location ${this.location} -> chain ${this.chain.id}`)
-                        if (typeof this.recpient === 'string') {
-
-                            let col1 = [
-                                [this.name],
-                                [`Chain: ${this.chain.id}`]
-                            ]
-                            let col2 = [
-                                ["location", "direction", "state"],
-                                [this.location, this.direction, this.state],
-
-                            ]
-                            let col3 = [
-                                ["Messages", "name", "location", "direction", "state"],
-                                ["received", name, sender_location, data.direction, data.state],
-                                ["sending", this.name, this.location, this.direction, this.state]
-                            ]
-                            let node = [col1, col2, col3]
-                            log(node)
-                            this.sendState(this.recpient)
-                        }
-                    }
-                }
-                else this.node.send(name, encode(this.chain))
-            }
+            this.node.listen(this.name, (message, name) => this.listener(message, name))
+            this.node.core.on("connect", (id, name) => this.update(name))
+            this.State(decode(this.buildState()), "")
         } catch (error) {
-            log(`listener: ${error}`)
+            log(`run: ${error}`)
         }
-
     }
 
     test() {
@@ -215,56 +216,7 @@ class Oscillate {
             try { log(this.chain.blocks.length) }
             catch (error) { log(`test: ${error}`) }
         }, 5000)
-    }
-
-    run() {
-        try {
-            if (this.chain && this.chain.isValid(this.chain)) setTimeout(() => {
-                try {
-                    this.location = this.getLocation(this.name)
-                    if (this.location === null) return
-
-                    this.position = this.getPosition(this.location)
-                    // if (position === 1) this.state = this.invert_state(this.state)
-
-                    if (this.debug === 'location') {
-                        if (this.position === 'first') log(`location : ${this.location} | I'm first.`)
-                        log(`${this.name} location ${this.location} -> chain ${this.chain.id}`)
-                        if (this.position === 'last') log(`location : ${this.location} | I'm last.`)
-                    }
-
-                    this.recpient = this.selectNeighbor(this.location)
-                    if (typeof this.recpient === 'string') {
-                        let col1 = [
-                            [this.name],
-                            [`Chain: ${this.chain.id}`]
-                        ]
-                        let col2 = [
-                            ["location", "direction", "state"],
-                            [this.location, this.direction, this.state],
-
-                        ]
-                        let col3 = [
-                            ["Messages", "name", "location", "direction", "state"],
-                            ["received", "-", "-", "-", "-"],
-                            ["sending", this.name, this.location, this.direction, this.state]
-                        ]
-                        let node = [col1, col2, col3]
-                        log(node)
-                        this.sendState(this.recpient)
-                    }
-
-                } catch (error) {
-                    log(`spin: ${error}`)
-                }
-            }, 5000)
-
-            this.node.listen(this.name, (message, name) => this.listener(message, name))
-            this.node.core.on("connect", (id, name) => this.update(name))
-        } catch (error) {
-            log(`run: ${error}`)
-        }
-    }
+    }    
 }
 
 let service = () => {
