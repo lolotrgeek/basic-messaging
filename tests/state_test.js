@@ -38,7 +38,7 @@ function removePeer(name) {
     try {
         // node.core.removeListener(name)
         let found = peers.findIndex(peer => peer[1] === name)
-        peers.splice(found, 1)
+        if (found > 0) peers.splice(found, 1)
         console.clear()
         console.log(table(peers))
     } catch (error) {
