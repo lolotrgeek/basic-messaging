@@ -12,6 +12,8 @@
   "dependencies": {
     "basic-chain": "github:lolotrgeek/Chain",
     "node-ipc": "github:RIAEvangelist/node-ipc",
-    "table": "^6.8.0"
+    "process-spawn": "github:lolotrgeek/process-spawn",
+    "table": "^6.8.0",
+    "zyre.js": "^1.2.2"
   }
 }
