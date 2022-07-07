@@ -1,11 +1,10 @@
 
 class Connector {
-    constructor(name, location, messenger) {
-        this.name = name.substring(0, 8) + "_" + location
+    constructor(channel, messenger) {
+        this.channel = channel
         this.messenger = messenger
         this.max = 2
-        this.channel = ''
-        this.nodes = [this.name]
+        this.nodes = []
         
         this.messenger.core.on("join", (id, name, channel) => {
             if (channel === this.channel && this.nodes.length < this.max) {
@@ -29,7 +28,10 @@ class Connector {
     }
 
     listen(listener) {
-        this.messenger.listen(this.channel, listener)
+        this.messenger.listen(this.channel, (message, name) => {
+            let found = this.nodes.find(node => node.name === name)
+            if(found) listener(message)
+        })
     }
 
     send(message) {

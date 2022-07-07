@@ -62,10 +62,11 @@ class Messenger {
     listen(channel, listener) {
         if(channel === "*") this.join_all(listener)
         else this.join(channel)
-        this.core.on("shout", (id, name, message, group) => this.listening(listener, channel, message, group, name))        
+        this.core.on("shout", (id, name, message, group) => this.listening(listener, channel, message, group, name))
     }
 
     send(channel, message) {
+        if(typeof channel === 'object' && channel.to) this.core.whisper(channel.to, message)
         this.core.shout(channel, message)
     }
 
