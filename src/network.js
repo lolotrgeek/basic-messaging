@@ -3,7 +3,7 @@ const Zyre = require('zyre.js')
 
 class Node {
     constructor(name) {
-        if(!name) throw "Must pass a name to Node!"
+        if (!name) throw "Must pass a name to Node!"
         this.debug = false
         this.core = new Zyre({ name })
         this.started = this.core.start()
@@ -71,7 +71,7 @@ class Node {
     /**
      * 
      * @param {string | object} channel name of channel or `{from: ""}` to listen for requests
-     * @param {function} listener `(message: string, name?: any)`
+     * @param {function} listener `(message: string, name?: any)` - `name` is used to identify sender
      */
     listen(channel, listener) {
         if (typeof channel === 'object' && channel.from) {

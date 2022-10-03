@@ -6,8 +6,8 @@ Simple node based networking.
 ```
 const {Node} = require('basic')
 
-const node = new Node()
-node.listen("hi")
+const node = new Node("new_node")
+node.listen("hi", (message, name) => console.log(message, name))
 node.send("hi", "world")
 
 ```
