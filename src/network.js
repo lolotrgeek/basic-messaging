@@ -1,122 +1,99 @@
+'use strict'
 const Zyre = require('zyre.js')
-const { Encode, Decode } = require('./parse')
 
 class Node {
-    /**
-     * 
-     * @param {function} callback handle incoming messages
-     */
-    constructor(callback) {
-        this.callback = callback
-        this.identifier = message => console.log(message)
-        this.removed = message => message
-        this.core = new Zyre()
-        this.distances = {} // {id: sent: timestamp, received: timestamp distance: ms}
-        this.heartbeat = 2000
-        this.peers = {}
-        this.core.start().then(() => this.core.join(this.core.getIdentity()))
-        this.core.on('connect', (id, name, headers) => this.hear_connect(id))
-        this.core.on("whisper", (id, name, message) => this.hear_whisper(id, message))
-        this.core.on("shout", (id, name, message, group) => this.hear_shout(id, message))
-        this.core.on('disconnect', (id, name) => this.hear_removed(id))
-        this.core.on('expired', (id, name) => this.hear_removed(id))
+    constructor(name) {
+        if(!name) throw "Must pass a name to Node!"
+        this.debug = false
+        this.core = new Zyre({ name })
+        this.started = this.core.start()
+        this.channels = []
+        this.core.setEncoding('utf8')
+        if (this.debug === "network") {
+            console.log(`Core:`, this.core)
+            this.core.on('disconnect', console.log)
+            this.core.on('expired', console.log)
+            this.core.on('leave', console.log)
+            this.core.on('connect', console.log)
+            this.core.on('join', console.log)
+        }
+    }
+
+    decode(data) {
+        try {
+            return JSON.parse(data)
+        } catch (error) {
+            return data
+        }
+    }
+
+    encode(data) {
+        return JSON.stringify(data)
+    }
+
+    joined(channel) {
+        return this.channels.find(joined_channel => joined_channel === channel)
+    }
+
+    joining(channel) {
+        if (this.debug) console.log(`Joining Channel: ${typeof channel}::${channel}`)
+        this.core.join(channel)
+        this.channels.push(channel)
+    }
+
+    join(channel) {
+        if (typeof channel !== "string") return false
+        this.started.then(() => {
+            if (!this.joined(channel)) this.joining(channel)
+        })
+    }
+
+    join_all(listener) {
+        let groups = this.core.getGroups()
+        for (let channel in groups) {
+            this.join(channel)
+            this.core.on("shout", (id, name, message, group) => this.listening(listener, channel, message, group, name))
+        }
     }
 
     /**
-     * When a peer connects, join their channel and ping them
-     * @param {string} peer id of peer connecting
-     */
-    hear_connect(peer) {
-        this.core.join(peer)
-        this.distances[peer] = {}
-        // this.distances[peer].distance = []
-        this.ping(peer)
-    }
-
-    /**
      * 
-     * @param {string} peer id of peer that whispered
+     * @param {function} listener 
+     * @param {string} channel 
      * @param {*} message 
+     * @param {string} group 
+     * @param {string} name  name of node that sent the message
      */
-    hear_whisper(peer, message) {
-        if (message === "ping") this.pong(peer)
-        if (message === "pong") this.received(peer)
-        if (message === "identify") this.identify_self(peer)
+    listening(listener, channel, message, group, name) {
+        if (typeof listener === 'function' && group === channel) listener(this.decode(message), name)
+    }
+
+    /**
+     * 
+     * @param {string | object} channel name of channel or `{from: ""}` to listen for requests
+     * @param {function} listener `(message: string, name?: any)`
+     */
+    listen(channel, listener) {
+        if (typeof channel === 'object' && channel.from) {
+            this.core.on("whisper", (id, name, message) => this.listener(message, id, name))
+        }
         else {
-            message = Decode(message)
-            if (typeof message === 'object' && message.id && message.distances) this.identifier(message)
+            if (channel === "*") this.join_all(listener)
+            else this.join(channel)
+            this.core.on("shout", (id, name, message, group) => this.listening(listener, channel, message, group, name))
         }
     }
+
     /**
      * 
-     * @param {string} peer id of peer that shouted
+     * @param {string | object} channel name of channel or `{to: id}`
      * @param {*} message 
+     * @param {integer} [timeout] *optional* how long to wait before sending message
      */
-    hear_shout(peer, message) {
-        this.next(peer)
-        if (typeof this.callback === 'function') this.callback(message)
-    }
-
-    hear_removed(peer) {
-        delete this.distances[peer]
-        this.removed(peer)
-    }
-
-    send(message) {
-        let channel = this.core.getIdentity()
-        console.log(`message on ${channel}: `, message)
-        this.core.shout(channel, message)
-    }
-
-    pong(peer) {
-        this.core.whisper(peer, "pong")
-        // this.distances[id].received = 0
-        // this.distances[id].sent = Date.now()
-    }
-
-    ping(peer) {
-        if(!peer || !this.distances[peer]) return
-        this.core.whisper(peer, "ping")
-        this.distances[peer].sent = Date.now()
-    }
-
-    received(peer) {
-        this.distances[peer].received = Date.now()
-        let distance = this.distances[peer].received - this.distances[peer].sent
-        // this.distances[peer].distance = [...this.distances[peer].distance, distance]
-        this.distances[peer].distance = distance
-        // console.log("distances", this.distances)
-    }
-    
-    next(peer) {
-        this.ping(peer)
-    }
-
-    ping_all() {
-        this.peers = this.core.getPeers()
-        for (let peer in this.peers) {
-            this.ping(peer)
-        }
-    }
-
-    identify_self(to) {
-        this.core.whisper(to, Encode({ id: this.core.getIdentity(), distances: this.distances }))
-    }
-
-    identify(peer) {
-        this.core.whisper(peer, "identify")
-    }
-    identify_all() {
-        this.peers = this.core.getPeers()
-        for (let peer in this.peers) this.identify(peer)
-    }
-
-    update() {
-        this.peers = this.core.getPeers()
-        for (let peer in this.peers) {
-            this.ping(peer)
-            this.identify(peer)
-        }
+    send(channel, message, timeout) {
+        if (typeof channel === 'object' && channel.to) this.core.whisper(channel.to, this.encode(message))
+        else if (typeof timeout === 'number') setTimeout(() => this.core.shout(channel, this.encode(message)), timeout)
+        else this.core.shout(channel, this.encode(message))
     }
 
 }
