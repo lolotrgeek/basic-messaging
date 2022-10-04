@@ -91,6 +91,7 @@ class Node {
      * @param {integer} [timeout] *optional* how long to wait before sending message
      */
     send(channel, message, timeout) {
+        if (!this.joined(channel)) this.join(channel)
         if (typeof channel === 'object' && channel.to) this.core.whisper(channel.to, this.encode(message))
         else if (typeof timeout === 'number') setTimeout(() => this.core.shout(channel, this.encode(message)), timeout)
         else this.core.shout(channel, this.encode(message))
