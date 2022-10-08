@@ -19,3 +19,9 @@ node.send("hi", "world")
 - `process` implements low level emergent computational engine
 
 - all other branches are experimental
+
+## Todo
+
+
+## Credits
+- Based on https://interpretor.github.io/zyre.js/
