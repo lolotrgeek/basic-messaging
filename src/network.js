@@ -30,7 +30,9 @@ class Node {
         return new Promise(resolve => {
             this.started.then(() => {
                 let found = this.core.getGroup(channel)
-                resolve(found)
+                if (this.debug === 'join') console.log("joined", found)
+                if(typeof found === 'object' && Object.values(found).length > 0) resolve(found)
+                else resolve(false)
             })
         })
     }
@@ -38,12 +40,14 @@ class Node {
     join(channel) {
         return new Promise(resolve => {
             this.started.then(async () => {
-                console.log("joining", channel)
-                this.core.join(channel)
                 try {
-                    let confirmed = await this.joined(channel)
-                    if (confirmed) resolve(confirmed)
-                    else setTimeout(async () => resolve(await this.join(channel)), 1000)
+                    let joined = await this.joined(channel)
+                    if (joined) return resolve(joined)
+                    else {
+                        if (this.debug === 'join') console.log("joining", channel)
+                        this.core.join(channel)
+                        return setTimeout(async () => resolve(await this.join(channel)), 1000)
+                    }
                 } catch (error) {
                     resolve(error)
                 }
@@ -60,6 +64,7 @@ class Node {
      * @param {string} name  name of node that sent the message
      */
     listening(listener, channel, message, group, name) {
+        if(this.debug) console.log("hears", message, group)
         if (typeof listener === 'function' && group === channel) listener(this.decode(message), name)
     }
 
@@ -72,18 +77,16 @@ class Node {
         return new Promise(resolve => {
             this.started.then(async () => {
                 if (typeof channel === 'object' && channel.from) {
-                    this.core.on("whisper", (id, name, message) => listener(message, id, name))
-                    resolve(true)
+                    let listens = this.core.on("whisper", (id, name, message) => listener(message, id, name))
+                    resolve(listens)
                 }
                 else {
                     await this.join(channel)
-                    this.core.on("shout", (id, name, message, group) => this.listening(listener, channel, message, group, name))
-                    resolve(true)
+                    let listens = this.core.on("shout", (id, name, message, group) => this.listening(listener, channel, message, group, name))
+                    resolve(listens)
                 }
-
             }).catch(() => resolve(false))
         })
-
     }
 
     /**
@@ -95,10 +98,14 @@ class Node {
     send(channel, message, timeout) {
         return new Promise(resolve => {
             this.started.then(async () => {
-                await this.join(channel)
                 if (typeof channel === 'object' && channel.to) this.core.whisper(channel.to, this.encode(message))
-                else if (typeof timeout === 'number') setTimeout(() => this.core.shout(channel, this.encode(message)), timeout)
-                else this.core.shout(channel, this.encode(message))
+                else {
+                    await this.join(channel)
+                    if(this.debug) console.log('sending...')
+                    if (typeof timeout === 'number') setTimeout(() => this.core.shout(channel, this.encode(message)), timeout)
+                    else this.core.shout(channel, this.encode(message))
+                }
+
                 resolve(message)
             })
         })
