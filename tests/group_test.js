@@ -1,7 +1,8 @@
 const { Node } = require("../main")
 const node = new Node("test")
 const node2 = new Node("test2")
-
+node.debug = 'join'
+node2.debug = 'join'
 
 const test = message => {
     console.log("Passed:", typeof message === 'object' && Object.values(message)[0].groups[0] === 'test')
