@@ -9,6 +9,7 @@ class Node {
         this.started = this.core.start()
         this.core.setEncoding('utf8')
         this.last_message
+        this.listen_tries = 0
         if (this.debug === "network") {
             console.log(`Core:`, this.core)
             this.core.on('disconnect', console.log)
@@ -120,12 +121,18 @@ class Node {
 
     listens(channel) {
         return new Promise(async resolve => {
-            if (!this.last_message || this.isTooOld(this.last_message)) {
-                resolve(await this.sender(channel, "ready"))
+            this.listen_tries++
+            if(this.listen_tries > 10) {
+                this.listen_tries = 0
+                return resolve(false)
             }
-            setTimeout(async () => resolve(await this.listens(channel)), 5000)
+            else if (this.last_message && this.isTooOld(this.last_message) !== true) {
+                // await this.join(channel)
+                return resolve(true)
+            }
+            await this.sender(channel, "ready")
+            setTimeout(async () => resolve(await this.listens(channel)), 2000)
         })
-
     }
 
     /**
@@ -143,7 +150,11 @@ class Node {
                 else {
                     await this.join(channel)
                     let listens = this.core.on("shout", (id, name, message, group) => this.listening(listener, channel, message, group, name))
-                    await this.listens(channel)
+                    let success = await this.listens(channel)
+                    if(!success){
+                        this.core.removeAllListeners("shout")
+                        await this.listen(channel, listener)
+                    }
                     resolve(listens)
                 }
             }).catch(() => resolve(false))

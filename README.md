@@ -20,6 +20,13 @@ node.send("hi", "world")
 
 - all other branches are experimental
 
+## Tests
+- case 1 - start send node, then start listen node --> works
+- case 2 - start listen node, start send node --> works
+- case 3 - send node running, stop listen node, restart listen node --> works
+- case 4 - listen node running, stop send node, restart send node --> works
+- case 5 - 2 or more listener nodes, stop and restart one listener node, reconnects to other listener node before others --> does not hear messages
+
 ## Todo
 
 
