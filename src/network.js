@@ -20,14 +20,6 @@ class Node {
         return JSON.stringify(data)
     }
 
-    joined(channel) {
-
-    }
-
-    join(channel) {
-
-    }
-
     /**
      * 
      * @param {string | object} channel name of channel or `{to: id}`
@@ -45,7 +37,7 @@ class Node {
             } catch (error) {
                 console.log("Caught:" , error)
                 this.port+1
-                setTimeout(async () => resolve(await this.send(channel, message, options)), 1000)
+                resolve(await this.send(channel, message, options))
             }
         })
     }
