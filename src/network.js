@@ -122,7 +122,7 @@ class Node {
     listens(channel) {
         return new Promise(async resolve => {
             this.listen_tries++
-            if(this.listen_tries > 10) {
+            if(this.listen_tries > 5) {
                 this.listen_tries = 0
                 return resolve(false)
             }
@@ -143,6 +143,7 @@ class Node {
     listen(channel, listener) {
         return new Promise(resolve => {
             this.started.then(async () => {
+                console.log("listening...")
                 if (typeof channel === 'object' && channel.from) {
                     let listens = this.core.on("whisper", (id, name, message) => listener(message, id, name))
                     resolve(listens)
@@ -152,7 +153,10 @@ class Node {
                     let listens = this.core.on("shout", (id, name, message, group) => this.listening(listener, channel, message, group, name))
                     let success = await this.listens(channel)
                     if(!success){
-                        this.core.removeAllListeners("shout")
+                        console.log("stopping...")
+                        await this.core.stop()
+                        console.log("restarting...")
+                        this.started = await this.core.start()
                         await this.listen(channel, listener)
                     }
                     resolve(listens)
