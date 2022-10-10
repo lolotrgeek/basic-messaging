@@ -5,7 +5,7 @@ node.debug = 'join'
 
 
 function sender() {
-    node.send("test", `${node.core.getIdentity()}`).then(() => setTimeout(sender, 2000))
+    node.send("test", `hello!`).then(() => setTimeout(sender, 2000))
 }
 
 sender()

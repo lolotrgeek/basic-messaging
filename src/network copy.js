@@ -8,8 +8,11 @@ class Node {
         this.port = 3000
         this.base = "tcp://127.0.0.1:"
         this.address = this.base + this.port
-        this.publisher
+        this.publisher = new zmq.Publisher
         this.subscriber = new zmq.Subscriber
+        this.publisher_started
+        this.subscriber_started
+        this.publisher.bind(this.address).then(() => this.publisher_started = true)
     }
 
     decode(data) {
@@ -35,18 +38,8 @@ class Node {
      */
     send(channel, message, options) {
         return new Promise(async resolve => {
-            try {
-                if(!this.publisher) {
-                    this.publisher = new zmq.Publisher
-                    await this.publisher.bind(this.address)
-                }
-                console.log("sending", message)
-                return resolve(await this.publisher.send([channel, this.encode(message)]))
-            } catch (error) {
-                console.log("Caught:" , error)
-                this.port+1
-                setTimeout(async () => resolve(await this.send(channel, message, options)), 1000)
-            }
+            if (this.publisher_started) return await this.publisher.send([channel, this.encode(message)])
+            else setTimeout(async () => resolve(await this.send(channel, message, options)), 1000)
         })
     }
 
