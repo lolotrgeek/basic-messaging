@@ -10,6 +10,6 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "zyre.js": "^1.3.0"
+    "zyre.js": "^2.0.0-beta.0"
   }
 }
