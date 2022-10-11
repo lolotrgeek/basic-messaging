@@ -5,7 +5,8 @@ class Node {
     constructor(name) {
         this.debug = false
         this.name = name ? name : randomUUID()
-        this.core = new Publisher({ name: this.name }, { log: this.debug })
+        this.config = { log: this.debug, helloLogsEnabled: this.debug, statusLogsEnabled: this.debug, logUnknownEvents: this.debug }
+        this.core = new Publisher({ name: this.name }, this.config )
         this.channels = []
     }
 
@@ -24,7 +25,7 @@ class Node {
 
     listen(channel, listener) {
         this.join(channel)
-        let listening = new Subscriber({ name: `${this.name}` }, { log: this.debug })
+        let listening = new Subscriber({ name: `${this.name}` }, this.config)
         listening.on(channel, listener)
     }
 
