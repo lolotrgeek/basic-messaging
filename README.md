@@ -4,7 +4,7 @@ Simple node based networking.
 ## Usage
 
 ```
-const {Node} = require('basic')
+const {Node} = require('basic-messaging')
 
 const node = new Node("new_node")
 node.listen("hi", (message, name) => console.log(message, name))
