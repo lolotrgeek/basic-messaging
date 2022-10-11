@@ -5,8 +5,9 @@ node.debug = 'join'
 
 node.listen("test", message => { console.log(message) })
 
-// function sender() {
-//     node.send("test", "hello!").then(() => setTimeout(sender, 2000))
-// }
+function sender() {
+    node.send("test", "hello World!")
+    setTimeout(sender, 2000)
+}
 
-// sender()
+sender()
