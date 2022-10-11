@@ -14,8 +14,12 @@ node.send("hi", "world")
 
 ## Branches
 
+<<<<<<< HEAD
 - `master` more robust stable implementation
 - `basic` simple, stable implementation
+=======
+- `master` stable implementation
+>>>>>>> basic-cote
 - `process` implements low level emergent computational engine
 
 - all other branches are experimental
@@ -25,10 +29,18 @@ node.send("hi", "world")
 - case 2 - start listen node, start send node --> works
 - case 3 - send node running, stop listen node, restart listen node --> works
 - case 4 - listen node running, stop send node, restart send node --> works
+<<<<<<< HEAD
 - case 5 - 2 or more listener nodes, stop and restart one listener node, reconnects to other listener node before others --> does not hear messages
+=======
+- case 5 - 2 or more listener nodes, stop and restart one listener node, reconnects to other listener node before others --> works
+>>>>>>> basic-cote
 
 ## Todo
 
 
 ## Credits
+<<<<<<< HEAD
 - Based on https://interpretor.github.io/zyre.js/
+=======
+- Based on https://github.com/dashersw/cote
+>>>>>>> basic-cote

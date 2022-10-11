@@ -10,6 +10,10 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+<<<<<<< HEAD
     "zeromq": "^6.0.0-beta.6"
+=======
+    "cote": "^1.0.3"
+>>>>>>> basic-cote
   }
 }
