@@ -1,5 +1,5 @@
 {
-  "name": "basic",
+  "name": "basic-messanging",
   "version": "1.3.0",
   "description": "",
   "main": "main.js",
@@ -8,7 +8,7 @@
   },
   "keywords": [],
   "author": "",
-  "license": "ISC",
+  "license": "MIT",
   "dependencies": {
     "cote": "^1.0.3"
   }
