@@ -1,58 +1,35 @@
 const { Subscriber, Publisher } = require('cote')
+const { randomUUID } = require('crypto')
 
 class Node {
     constructor(name) {
-        this.debug = true
-        this.core = new Zyre({ name })
-        this.started = this.core.start()
+        this.debug = false
+        this.name = name ? name : randomUUID()
+        this.core = new Publisher({ name: this.name }, { log: this.debug })
         this.channels = []
-        if (this.debug === "network") {
-            console.log(`Core:`, this.core)
-            this.core.on('disconnect', console.log)
-            this.core.on('expired', console.log)
-            this.core.on('leave', console.log)
-            this.core.on('connect', console.log)
-            this.core.on('join', console.log)
-        }
     }
 
     joined(channel) {
         return this.channels.find(joined_channel => joined_channel === channel)
     }
 
-    joining(channel) {
-        if (this.debug) console.log(`Joining Channel: ${typeof channel}::${channel}`)
-        this.core.join(channel)
-        this.channels.push(channel)
-    }
-
     join(channel) {
         if (typeof channel !== "string") return false
-        this.started.then(() => {
-            if (!this.joined(channel)) this.joining(channel)
-        })
-    }
-
-    join_all(listener) {
-        let groups = this.core.getGroups()
-        for (let channel in groups) {
-            this.join(channel)
-            this.core.on("shout", (id, name, message, group) => this.listening(listener, channel, message, group))
+        if (!this.joined(channel)) {
+            if (this.debug) console.log(`Joining Channel: ${typeof channel}::${channel}`)
+            this.channels.push(channel)
         }
-    }
 
-    listening(listener, channel, message, group) {
-        if (typeof listener === 'function' && group === channel) listener(message)
     }
 
     listen(channel, listener) {
-        if (channel === "*") this.join_all(listener)
-        else this.join(channel)
-        this.core.on("shout", (id, name, message, group) => this.listening(listener, channel, message, group))
+        this.join(channel)
+        let listening = new Subscriber({ name: `${this.name}` }, { log: this.debug })
+        listening.on(channel, listener)
     }
 
     send(channel, message) {
-        this.core.shout(channel, message)
+        this.core.publish(channel, message)
     }
 
 }
