@@ -7,7 +7,11 @@
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
-  "author": "",
+  "author": "lolotrgeek",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/lolotrgeek/basic-messaging"
+  },
   "license": "MIT",
   "dependencies": {
     "cote": "^1.0.3"
