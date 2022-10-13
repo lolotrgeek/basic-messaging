@@ -1,4 +1,4 @@
-# Basic
+# basic-messaging
 Simple node based networking.
 
 ## Usage
